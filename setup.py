@@ -40,7 +40,7 @@ def _find_packages():
 
 setup(
     name='pytest-flexreport',
-    version='1.1.3',
+    version='1.1.14',
     author='TXU',
     author_email='tao.xu2008@outlook.com',
     maintainer='flexreport',
@@ -73,7 +73,7 @@ setup(
         'License :: OSI Approved :: MIT License',
     ],
     package_data={
-        "": ["*.html", '*.md'],
+        "": ["*.html", '*.css', '*.js', '*.md'],
     },
     entry_points={
         'pytest11': [

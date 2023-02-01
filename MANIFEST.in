@@ -5,7 +5,9 @@ include *.ini
 include *.rst
 include *.txt
 include .gitignore
-include .html
+include *.html
+include *.css
+include *.js
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

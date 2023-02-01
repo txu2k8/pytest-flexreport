@@ -11,6 +11,7 @@ import datetime
 import json
 import os
 import time
+import shutil
 from typing import Text, Dict, List
 from pydantic import BaseModel
 import pytest
@@ -95,7 +96,7 @@ def handle_history_data(report_dir, result: TestResult):
          'fail': result.failed,
          'skip': result.skipped,
          'error': result.error,
-         'runtime': result.run_time,
+         'run_time': result.run_time,
          'begin_time': result.begin_time,
          'pass_rate': result.pass_rate,
          }
@@ -119,13 +120,18 @@ def pytest_sessionfinish(session):
         report_path = report_path + '.html'
 
     report_dir = os.path.dirname(report_path) or 'reports'
+    report_static_dir = os.path.join(report_dir, "static")
     history_dir = history_dir or report_dir
     if os.path.isdir(report_dir):
         pass
     else:
         os.makedirs(report_dir, exist_ok=True)
+    if os.path.isdir(report_static_dir):
+        pass
+    else:
+        os.makedirs(report_static_dir, exist_ok=True)
 
-    test_result.run_time = '{:.6f} S'.format(time.time() - test_result.start_time)
+    test_result.run_time = '{:.2f} s'.format(time.time() - test_result.start_time)
     test_result.total = len(test_result.cases)
     if test_result.total != 0:
         test_result.pass_rate = '{:.2f}'.format(test_result.passed / test_result.total * 100)
@@ -135,9 +141,14 @@ def pytest_sessionfinish(session):
     test_result.history = handle_history_data(history_dir, test_result)
     # 渲染报告
     template_path = os.path.join(os.path.dirname(__file__), './templates')
+    template_static_path = os.path.join(template_path, 'static')
+    # 复制渲染文件 css、js
+    shutil.copyfile(os.path.join(template_static_path, "bootstrap.min.css"), os.path.join(report_static_dir, "bootstrap.min.css"))
+    shutil.copyfile(os.path.join(template_static_path, "echarts.min.js"), os.path.join(report_static_dir, "echarts.min.js"))
+    shutil.copyfile(os.path.join(template_static_path, "jquery.slim.min.js"), os.path.join(report_static_dir, "jquery.slim.min.js"))
     env = Environment(loader=FileSystemLoader(template_path))
     template = env.get_template(f'template{templates_name}.html')
-    report = template.render(test_result)
+    report = template.render(dict(test_result))
     with open(report_path, 'wb') as f:
         f.write(report.encode('utf8'))
 
@@ -205,3 +216,4 @@ def pytest_addoption(parser):
 
 if __name__ == '__main__':
     pass
+    print(dict(TestResult()))
