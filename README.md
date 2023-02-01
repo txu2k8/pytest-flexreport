@@ -24,12 +24,14 @@ pytest-testreport是基于python3.6开发的，安装前请确认你的python版
     pytest --report=musen.html
     
     #其他配置参数
+    --report=html报告文件路径
+    --history_dir=history.json的目录路径，默认使用html文件同级目录
     --title=指定报告标题
     --tester=指定报告中的测试者
     --desc = 指定报告中的项目描述
     
     # 同时使用多个参数
-    pytest --report=musen.html --title=测试报告 --tester=测试菜鸟 --desc=项目描述
+    pytest --report=report.html --history_dir=./reports --title=测试报告 --tester=测试A --desc=项目描述
     ```
     
 - ###### pytest.main执行
@@ -38,6 +40,7 @@ pytest-testreport是基于python3.6开发的，安装前请确认你的python版
     import pytest
     
     pytest.main(['--report=musen.html',
+                 '--history_dir=./reports',
                  '--title=测试报告标题',
                  '--tester=木森',
                  '--desc=报告描述信息'])

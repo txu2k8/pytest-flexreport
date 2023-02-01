@@ -225,7 +225,7 @@
                         </div>
                         <div style="flex:5">
                             <button type="button" class="btn btn-primary btn-sm">用例总数</button>
-                            <span>{{ all }}</span>
+                            <span>{{ total }}</span>
                         </div>
                     </div>
                     <div class="info">
@@ -272,7 +272,7 @@
                         {% for hos in history[::-1] %}
                         <tr>
                             <th scope="row">{{hos.begin_time}}</th>
-                            <td>{{hos.all}}</td>
+                            <td>{{hos.total}}</td>
                             <td>{{hos.success}}</td>
                             <td>{{hos.pass_rate}}%</td>
                         </tr>
@@ -422,7 +422,7 @@
 
     const resulte = {
             "success": `{{passed}}`,
-            "all": `{{all}}`,
+            "total": `{{total}}`,
             "fail": `{{failed}}`,
             "skip": '{{skipped}}',
             "error": `{{error}}`,
@@ -641,7 +641,7 @@
         let myChart = echarts.init(document.getElementById("char3"));
         var data = [resulte.success, resulte.fail, resulte.error, resulte.skip];
         var titlename = ["通过用例", "失败用例", "错误用例", "跳过用例",];
-        var valdata = [resulte.all, resulte.all, resulte.all, resulte.all];
+        var valdata = [resulte.total, resulte.total, resulte.total, resulte.total];
         var myColor = ['#28a745', '#ffc107', '#dc3545', '#17a2b8'];
         option = {
             //图标位置

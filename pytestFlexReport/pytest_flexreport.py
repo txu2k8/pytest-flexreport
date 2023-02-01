@@ -11,7 +11,7 @@ import datetime
 import json
 import os
 import time
-from typing import Text, Dict, Set
+from typing import Text, Dict, List
 from pydantic import BaseModel
 import pytest
 from jinja2 import Environment, FileSystemLoader
@@ -23,15 +23,19 @@ class TestResult(BaseModel):
     title: Text = ''
     tester: Text = ''
     desc: Text = ''
+
     cases: Dict = {}
-    modules: Set = ()
+    modules: List = []
+    history: List = []
+
     rerun: int = 0
-    all: int = 0
+    total: int = 0
     passed: int = 0
     failed: int = 0
     skipped: int = 0
     error: int = 0
     pass_rate: int = 0
+
     start_time: int = 0
     run_time: int = 0
     begin_time: Text = ''
@@ -47,7 +51,7 @@ def pytest_make_parametrize_id(config, val, argname):
 
 def pytest_runtest_logreport(report):
     report.duration = '{:.6f}'.format(report.duration)
-    test_result.modules.add(report.fileName)
+    test_result.modules.append(report.fileName)
     if report.when == 'call':
         if report.outcome == 'passed':
             test_result.passed += 1
@@ -87,7 +91,7 @@ def handle_history_data(report_dir, result: TestResult):
         history = []
     history.append(
         {'success': result.passed,
-         'all': result.all,
+         'total': result.total,
          'fail': result.failed,
          'skip': result.skipped,
          'error': result.error,
@@ -104,45 +108,37 @@ def handle_history_data(report_dir, result: TestResult):
 
 def pytest_sessionfinish(session):
     """在整个测试运行完成之后调用的钩子函数,可以在此处生成测试报告"""
-    report2 = session.config.getoption('--report')
+    default_report_path = os.path.join('reports', time.strftime("%Y-%m-%d_%H_%M_%S") + '.html')
+    report_path = session.config.getoption('--report') or default_report_path
+    history_dir = session.config.getoption('--history_dir')
+    test_result.title = session.config.getoption('--title') or '测试报告'
+    test_result.tester = session.config.getoption('--tester') or 'NA'
+    test_result.desc = session.config.getoption('--desc') or 'NA'
+    templates_name = session.config.getoption('--template') or '1'
+    if not report_path.endswith('.html'):
+        report_path = report_path + '.html'
 
-    if report2:
-        test_result.title = session.config.getoption('--title') or '测试报告'
-        test_result.tester = session.config.getoption('--tester') or 'NA'
-        test_result.desc = session.config.getoption('--desc') or 'NA'
-        templates_name = session.config.getoption('--template') or '1'
-        name = report2
-    else:
-        return
-
-    if not name.endswith('.html'):
-        file_name = time.strftime("%Y-%m-%d_%H_%M_%S") + name + '.html'
-    else:
-        file_name = time.strftime("%Y-%m-%d_%H_%M_%S") + name
-
-    if os.path.isdir('reports'):
+    report_dir = os.path.dirname(report_path) or 'reports'
+    history_dir = history_dir or report_dir
+    if os.path.isdir(report_dir):
         pass
     else:
-        os.mkdir('reports')
-    file_name = os.path.join('reports', file_name)
+        os.makedirs(report_dir, exist_ok=True)
+
     test_result.run_time = '{:.6f} S'.format(time.time() - test_result.start_time)
-    test_result.all = len(test_result.cases)
-    if test_result.all != 0:
-        test_result.pass_rate = '{:.2f}'.format(test_result.passed / test_result.all * 100)
+    test_result.total = len(test_result.cases)
+    if test_result.total != 0:
+        test_result.pass_rate = '{:.2f}'.format(test_result.passed / test_result.total * 100)
     else:
         test_result.pass_rate = 0
     # 保存历史数据
-    test_result.history = handle_history_data('reports', test_result)
+    test_result.history = handle_history_data(history_dir, test_result)
     # 渲染报告
     template_path = os.path.join(os.path.dirname(__file__), './templates')
     env = Environment(loader=FileSystemLoader(template_path))
-
-    if templates_name == '2':
-        template = env.get_template('templates2.html')
-    else:
-        template = env.get_template('templates.html')
+    template = env.get_template(f'template{templates_name}.html')
     report = template.render(test_result)
-    with open(file_name, 'wb') as f:
+    with open(report_path, 'wb') as f:
         f.write(report.encode('utf8'))
 
 
@@ -169,6 +165,13 @@ def pytest_addoption(parser):
         metavar="path",
         default=None,
         help="create html report file at given path.",
+    )
+    group.addoption(
+        "--history_dir",
+        action="store",
+        metavar="path",
+        default=None,
+        help="create html report history dir path.",
     )
     group.addoption(
         "--title",
