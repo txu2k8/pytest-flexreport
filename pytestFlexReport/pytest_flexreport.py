@@ -11,25 +11,33 @@ import datetime
 import json
 import os
 import time
+from typing import Text, Dict, Set
+from pydantic import BaseModel
 import pytest
 from jinja2 import Environment, FileSystemLoader
 
-test_result = {
-    "title": "",
-    "tester": "",
-    "desc": "",
-    "cases": {},
-    'rerun': 0,
-    "failed": 0,
-    "passed": 0,
-    "skipped": 0,
-    "error": 0,
-    "start_time": 0,
-    "run_time": 0,
-    "begin_time": "",
-    "all": 0,
-    "testModules": set()
-}
+
+# 文件信息
+class TestResult(BaseModel):
+    """测试结果信息 - 数据模型"""
+    title: Text = ''
+    tester: Text = ''
+    desc: Text = ''
+    cases: Dict = {}
+    modules: Set = ()
+    rerun: int = 0
+    all: int = 0
+    passed: int = 0
+    failed: int = 0
+    skipped: int = 0
+    error: int = 0
+    pass_rate: int = 0
+    start_time: int = 0
+    run_time: int = 0
+    begin_time: Text = ''
+
+
+test_result = TestResult()
 
 
 def pytest_make_parametrize_id(config, val, argname):
@@ -39,26 +47,35 @@ def pytest_make_parametrize_id(config, val, argname):
 
 def pytest_runtest_logreport(report):
     report.duration = '{:.6f}'.format(report.duration)
-    test_result['testModules'].add(report.fileName)
+    test_result.modules.add(report.fileName)
     if report.when == 'call':
-        test_result[report.outcome] += 1
-        test_result["cases"][report.nodeid] = report
+        if report.outcome == 'passed':
+            test_result.passed += 1
+        elif report.outcome == 'failed':
+            test_result.passed += 1
+        elif report.outcome == 'skipped':
+            test_result.skipped += 1
+        elif report.outcome == 'error':
+            test_result.error += 1
+        test_result.cases[report.nodeid] = report
     elif report.outcome == 'failed':
-        report.outcome = 'error'
-        test_result['error'] += 1
-        test_result["cases"][report.nodeid] = report
+        test_result.failed += 1
+        test_result.cases[report.nodeid] = report
+    elif report.outcome == 'error':
+        test_result.error += 1
+        test_result.cases[report.nodeid] = report
     elif report.outcome == 'skipped':
-        test_result[report.outcome] += 1
-        test_result["cases"][report.nodeid] = report
+        test_result.skipped += 1
+        test_result.cases[report.nodeid] = report
 
 
 def pytest_sessionstart(session):
     start_ts = datetime.datetime.now()
-    test_result["start_time"] = start_ts.timestamp()
-    test_result["begin_time"] = start_ts.strftime("%Y-%m-%d %H:%M:%S")
+    test_result.start_time = start_ts.timestamp()
+    test_result.begin_time = start_ts.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def handle_history_data(report_dir, test_result):
+def handle_history_data(report_dir, result: TestResult):
     """
     处理历史数据
     :return:
@@ -68,15 +85,17 @@ def handle_history_data(report_dir, test_result):
             history = json.load(f)
     except:
         history = []
-    history.append({'success': test_result['passed'],
-                    'all': test_result['all'],
-                    'fail': test_result['failed'],
-                    'skip': test_result['skipped'],
-                    'error': test_result['error'],
-                    'runtime': test_result['run_time'],
-                    'begin_time': test_result['begin_time'],
-                    'pass_rate': test_result['pass_rate'],
-                    })
+    history.append(
+        {'success': result.passed,
+         'all': result.all,
+         'fail': result.failed,
+         'skip': result.skipped,
+         'error': result.error,
+         'runtime': result.run_time,
+         'begin_time': result.begin_time,
+         'pass_rate': result.pass_rate,
+         }
+    )
 
     with open(os.path.join(report_dir, 'history.json'), 'w', encoding='utf-8') as f:
         json.dump(history, f, ensure_ascii=True)
@@ -88,9 +107,9 @@ def pytest_sessionfinish(session):
     report2 = session.config.getoption('--report')
 
     if report2:
-        test_result['title'] = session.config.getoption('--title') or '测试报告'
-        test_result['tester'] = session.config.getoption('--tester') or '小测试'
-        test_result['desc'] = session.config.getoption('--desc') or '无'
+        test_result.title = session.config.getoption('--title') or '测试报告'
+        test_result.tester = session.config.getoption('--tester') or 'NA'
+        test_result.desc = session.config.getoption('--desc') or 'NA'
         templates_name = session.config.getoption('--template') or '1'
         name = report2
     else:
@@ -106,14 +125,14 @@ def pytest_sessionfinish(session):
     else:
         os.mkdir('reports')
     file_name = os.path.join('reports', file_name)
-    test_result["run_time"] = '{:.6f} S'.format(time.time() - test_result["start_time"])
-    test_result['all'] = len(test_result['cases'])
-    if test_result['all'] != 0:
-        test_result['pass_rate'] = '{:.2f}'.format(test_result['passed'] / test_result['all'] * 100)
+    test_result.run_time = '{:.6f} S'.format(time.time() - test_result.start_time)
+    test_result.all = len(test_result.cases)
+    if test_result.all != 0:
+        test_result.pass_rate = '{:.2f}'.format(test_result.passed / test_result.all * 100)
     else:
-        test_result['pass_rate'] = 0
+        test_result.pass_rate = 0
     # 保存历史数据
-    test_result['history'] = handle_history_data('reports', test_result)
+    test_result.history = handle_history_data('reports', test_result)
     # 渲染报告
     template_path = os.path.join(os.path.dirname(__file__), './templates')
     env = Environment(loader=FileSystemLoader(template_path))

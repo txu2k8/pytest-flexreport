@@ -1,0 +1,10 @@
+site_name: pytest-flexreport
+site_description: pytest test report for flex framework
+site_author: testreport
+
+theme: readthedocs
+
+repo_url: https://github.com/txu2k8/pytest-flexreport
+
+pages:
+- Home: index.md

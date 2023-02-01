@@ -1,0 +1,11 @@
+include LICENSE
+include README.md
+include *.in
+include *.ini
+include *.rst
+include *.txt
+include .gitignore
+include .html
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
