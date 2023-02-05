@@ -52,7 +52,8 @@ def pytest_make_parametrize_id(config, val, argname):
 
 def pytest_runtest_logreport(report):
     report.duration = '{:.6f}'.format(report.duration)
-    test_result.modules.append(report.fileName)
+    if report.fileName not in test_result.modules:
+        test_result.modules.append(report.fileName)
     if report.when == 'call':
         if report.outcome == 'passed':
             test_result.passed += 1

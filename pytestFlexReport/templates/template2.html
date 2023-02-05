@@ -94,7 +94,7 @@
         /* 执行信息样式   */
         .test_info {
             width: 100%;
-            padding: 20px 100px;
+            padding: 20px 10px;
             background: rgba(3, 14, 70, 0.5);
 
         }
@@ -219,31 +219,31 @@
                 <div class="desc">
 
                     <div class="info">
-                        <div style="flex:5">
+                        <div style="flex:6">
                             <button type="button" class="btn btn-primary btn-sm">开始时间</button>
                             <span>{{ begin_time }}</span>
                         </div>
-                        <div style="flex:5">
+                        <div style="flex:4">
                             <button type="button" class="btn btn-primary btn-sm">用例总数</button>
                             <span>{{ total }}</span>
                         </div>
                     </div>
                     <div class="info">
-                        <div style="flex:5">
+                        <div style="flex:6">
                             <button type="button" class="btn btn-primary btn-sm">运行时长</button>
                             <span>{{ run_time }}</span>
                         </div>
-                        <div style="flex:5">
+                        <div style="flex:4">
                             <button type="button" class="btn btn-primary btn-sm ">测试人员</button>
                             <span>{{ tester }}</span>
                         </div>
                     </div>
                     <div class="info">
-                        <div style="flex:5">
+                        <div style="flex:6">
                             <button type="button" class="btn btn-primary btn-sm">成功用例</button>
                             <span>{{ passed }}</span>
                         </div>
-                        <div style="flex:5">
+                        <div style="flex:4">
                             <button type="button" class="btn btn-primary btn-sm ">通过率</button>
                             <span>{{pass_rate}}%</span>
                         </div>
@@ -294,18 +294,18 @@
                 <thead class="text-light" style="background: rgba(3, 14, 70, 0.5)">
                 <tr>
                     <th scope="col" style="width: 5%;padding: 0">编号</th>
-                    <th scope="col" style="width: 20%;padding: 0">
+                    <th scope="col" style="width: 15%;padding: 0">
                         <span>用例模块</span>
                         <select id="testClass">
                             <option>所有</option>
-                            {% for foo in testModules %}
+                            {% for foo in modules %}
                             <option value="{{foo|replace('\\','')|replace('.','')}}">{{ foo }}</option>
                             {% endfor %}
                         </select>
 
                     </th>
                     <th scope="col" style="width: 15%;padding: 0">测试方法</th>
-                    <th scope="col" style="width: 20%;padding: 0">用例描述</th>
+                    <th scope="col" style="width: 25%;padding: 0">用例描述</th>
                     <th scope="col" style="width: 10%;padding: 0">执行时间</th>
                     <th scope="col" style="width: 20%;padding: 0">
 
@@ -326,8 +326,8 @@
                 {% for name, foo in cases.items() %}
                 <tr class="case_">
                     <td>{{ loop.index }}</td>
-                    <td class="{{ foo.fileName|replace('\\','')|replace('.','') }}">{{ foo.fileName }}</td>
-                    <td>{{ foo.method }}</td>
+                    <td class="{{ foo.fileName|replace('\\','')|replace('.','') }}">{{ foo.fileName.split("\\")[-1] }}</td>
+                    <td>{{ foo.method.split(".")[-1] }}</td>
                     <td>{{ foo.desc }}</td>
                     <td>{{ foo.duration }}</td>
                     {% if foo.outcome == 'passed' %}
