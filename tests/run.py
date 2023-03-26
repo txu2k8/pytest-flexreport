@@ -11,15 +11,16 @@ import json
 import pytest
 
 
-def main():
+def main(template_id=2):
     # - 构建pytest 参数
     print("构建pytest 参数...")
-    pytest_files_set = ['./test_demo.py']
+    pytest_files_set = ['./tests/test_demo.py']
     argv = pytest_files_set + [
         # pytest-testreport
-        '--report=demo',
+        f'--report=./reports/template{template_id}',
+        '--history_dir=./reports/',
         '--title=测试报告：demo（ID=xxx）',
-        '--template=2',
+        f'--template={template_id}',
     ]
     print("pytest 命令：{}\n".format(json.dumps(argv, indent=2)))
 
@@ -27,4 +28,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main(1)
+    # main(2)
+    main(3)

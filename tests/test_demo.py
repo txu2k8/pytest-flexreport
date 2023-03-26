@@ -9,9 +9,19 @@
 """
 
 
-class Demo(object):
+class TestDemo(object):
 
-    def test1(self):
+
+    def test_1(self):
+        assert 3 + 2 == 5
+
+    def test_2(self):
+        assert 3 + 2 == 6
+
+    def test_3(self):
+        assert 3 + 2 == 5
+
+    def test_4(self):
         assert 3 + 2 == 5
 
 
