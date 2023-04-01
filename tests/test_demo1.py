@@ -18,8 +18,8 @@ import allure
 class TestDemo1(object):
 
     def test_1(self):
+        allure.dynamic.feature("首页2")
         time.sleep(1)
-        allure.dynamic.label('feature', "首页2")
         print("TestDemo1--->>> test_1")
         assert 3 + 2 == 5
 

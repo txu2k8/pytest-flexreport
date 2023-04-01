@@ -17,6 +17,7 @@ from collections import defaultdict
 from pydantic import BaseModel
 import pytest
 from jinja2 import Environment, FileSystemLoader
+from pytestFlexReport.module_define_init_ import ModuleDefineInit
 
 
 # 结果统计
@@ -191,6 +192,12 @@ def pytest_runtest_makereport(item, call):
         module_name_list.append(module_dict['story'])
     if module_dict['feature']:
         module_name_list.append(module_dict['feature'])
+    if len(module_name_list) <= 1:
+        testcase_basename = item.config.getoption('--testcase_basename')
+        module_name_list.extend(ModuleDefineInit().get_testcase_module_list(
+            item.fspath.dirname, testcase_basename or item.config.rootdir.basename
+        ))
+    # print(module_name_list)
     report.moduleName = '/'.join(module_name_list) if len(module_name_list) > 1 else item.location[0]
 
     if hasattr(item, 'callspec'):
@@ -243,6 +250,13 @@ def pytest_addoption(parser):
         metavar="path",
         default=None,
         help="pytest-testreport Generate a template of the report",
+    )
+    group.addoption(
+        "--testcase_basename",
+        action="store",
+        metavar="path",
+        default=None,
+        help="pytest-testreport testcase rootdir basename",
     )
 
 

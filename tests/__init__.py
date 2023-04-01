@@ -7,6 +7,8 @@
 @email:tao.xu2008@outlook.com
 @description: 
 """
+__module_zh__ = 'tests'
+
 
 if __name__ == '__main__':
     pass
