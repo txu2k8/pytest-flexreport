@@ -207,15 +207,7 @@
     </div>
 
     <div class="test_info">
-        <h2>
-          <span>结果详情</span>
-          <select id="testClass" style="font-size: 12px;">
-              <option>Level=3</option>
-                  {% for foo in modules %}
-                      <option value="{{foo|replace('\\','')|replace('.','')}}">{{ foo }}</option>
-                  {% endfor %}
-          </select>
-        </h2>
+        <h2>结果详情</h2>
         <div class="table_data">
             <table class="table" style="color: #fff">
                 <thead class="text-light" style="background: rgba(3, 14, 70, 0.5)">

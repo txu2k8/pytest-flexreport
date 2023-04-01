@@ -150,7 +150,7 @@ def pytest_sessionfinish(session):
             result.module_outcome[m].pass_rate = 100 if rate >= 100 else '{:.1f}'.format(rate)
         else:
             result.module_outcome[m].pass_rate = 0
-
+    result.module_outcome = dict(sorted(result.module_outcome.items(), key=lambda x: x[0]))
     # 保存历史数据
     result.history = handle_history_data(history_dir, result)
     # 渲染报告
