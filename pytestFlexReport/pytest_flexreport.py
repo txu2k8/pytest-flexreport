@@ -13,6 +13,7 @@ import os
 import time
 import shutil
 from typing import Text, Dict, List
+from collections import defaultdict
 from pydantic import BaseModel
 import pytest
 from jinja2 import Environment, FileSystemLoader
@@ -28,6 +29,7 @@ class TestResult(BaseModel):
     cases: Dict = {}
     modules: List = []
     history: List = []
+    module_results: Dict = defaultdict(dict)
 
     rerun: int = 0
     total: int = 0
@@ -54,24 +56,35 @@ def pytest_runtest_logreport(report):
     report.duration = '{:.6f}'.format(report.duration)
     if report.fileName not in test_result.modules:
         test_result.modules.append(report.fileName)
+    if not test_result.module_results[report.fileName]:
+        test_result.module_results[report.fileName] = defaultdict(int)
+    test_result.module_results[report.fileName]["total"] += 1
+
     if report.when == 'call':
         if report.outcome == 'passed':
             test_result.passed += 1
+            test_result.module_results[report.fileName]["passed"] += 1
         elif report.outcome == 'failed':
-            test_result.passed += 1
+            test_result.failed += 1
+            test_result.module_results[report.fileName]["failed"] += 1
         elif report.outcome == 'skipped':
             test_result.skipped += 1
+            test_result.module_results[report.fileName]["skipped"] += 1
         elif report.outcome == 'error':
             test_result.error += 1
+            test_result.module_results[report.fileName]["error"] += 1
         test_result.cases[report.nodeid] = report
     elif report.outcome == 'failed':
         test_result.failed += 1
+        test_result.module_results[report.fileName]["failed"] += 1
         test_result.cases[report.nodeid] = report
     elif report.outcome == 'error':
         test_result.error += 1
+        test_result.module_results[report.fileName]["error"] += 1
         test_result.cases[report.nodeid] = report
     elif report.outcome == 'skipped':
         test_result.skipped += 1
+        test_result.module_results[report.fileName]["skipped"] += 1
         test_result.cases[report.nodeid] = report
 
 
@@ -132,12 +145,22 @@ def pytest_sessionfinish(session):
     else:
         os.makedirs(report_static_dir, exist_ok=True)
 
-    test_result.run_time = '{:.2f} s'.format(time.time() - test_result.start_time)
+    test_result.run_time = '{:.1f} s'.format(time.time() - test_result.start_time)
     test_result.total = len(test_result.cases)
     if test_result.total != 0:
-        test_result.pass_rate = '{:.2f}'.format(test_result.passed / test_result.total * 100)
+        rate = test_result.passed / test_result.total * 100
+        test_result.pass_rate = 100 if rate >= 100 else '{:.1f}'.format(rate)
     else:
         test_result.pass_rate = 0
+
+    # 处理模块统计数据
+    for m in test_result.module_results.keys():
+        if test_result.module_results[m]["total"] != 0:
+            rate = test_result.module_results[m]["passed"] / test_result.module_results[m]["total"] * 100
+            test_result.module_results[m]["pass_rate"] = 100 if rate >= 100 else '{:.1f}'.format(rate)
+        else:
+            test_result.module_results[m]["pass_rate"] = 0
+
     # 保存历史数据
     test_result.history = handle_history_data(history_dir, test_result)
     # 渲染报告

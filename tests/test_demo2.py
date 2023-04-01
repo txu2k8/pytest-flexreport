@@ -9,7 +9,7 @@
 """
 
 
-class TestDemo(object):
+class TestDemo2(object):
 
 
     def test_1(self):
@@ -19,7 +19,7 @@ class TestDemo(object):
         assert 3 + 2 == 6
 
     def test_3(self):
-        assert 3 + 2 == 5
+        assert 3 + 2 == 7
 
     def test_4(self):
         assert 3 + 2 == 5
