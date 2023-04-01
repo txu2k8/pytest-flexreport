@@ -326,7 +326,7 @@
                 {% for name, foo in cases.items() %}
                 <tr class="case_">
                     <td>{{ loop.index }}</td>
-                    <td class="{{ foo.fileName|replace('\\','')|replace('.','') }}">{{ foo.fileName.split("\\")[-1] }}</td>
+                    <td class="{{ foo.moduleName|replace('\\','')|replace('.','') }}">{{ foo.moduleName.split("\\")[-1] }}</td>
                     <td>{{ foo.method.split(".")[-1] }}</td>
                     <td>{{ foo.desc }}</td>
                     <td>{{ foo.duration }}</td>

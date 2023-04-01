@@ -246,7 +246,7 @@
                 {% for name, foo in module_outcome.items() %}
                 <tr class="case_">
                     <td>{{ loop.index }}</td>
-                    <td class="{{ name|replace('\\','')|replace('.','') }}">{{ name.split("\\")[-1] }}</td>
+                    <td class="{{ name|replace('\\','')|replace('.','') }}" style="text-align: left">{{ name.split("\\")[-1] }}</td>
                     <td>{{ foo.duration }}</td>
                     <td>{{ foo.total }}</td>
                     <td>{{ foo.passed }}</td>

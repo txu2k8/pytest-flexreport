@@ -14,7 +14,11 @@ import pytest
 def main(template_id=2):
     # - 构建pytest 参数
     print("构建pytest 参数...")
-    pytest_files_set = ['./tests/test_demo1.py', './tests/test_demo2.py']
+    pytest_files_set = [
+        './tests/test_demo1.py',
+        './tests/test_demo2.py',
+        './tests/test_demo3.py'
+    ]
     argv = pytest_files_set + [
         # pytest-testreport
         f'--report=./reports/template{template_id}',

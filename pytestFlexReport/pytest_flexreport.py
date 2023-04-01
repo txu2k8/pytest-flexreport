@@ -55,22 +55,22 @@ def pytest_make_parametrize_id(config, val, argname):
 
 
 def pytest_runtest_logreport(report):
-    if report.fileName not in result.modules:
-        result.modules.append(report.fileName)
-    if not result.module_outcome[report.fileName]:
-        result.module_outcome[report.fileName] = StatisticsOutcome()
+    if report.moduleName not in result.modules:
+        result.modules.append(report.moduleName)
+    if not result.module_outcome[report.moduleName]:
+        result.module_outcome[report.moduleName] = StatisticsOutcome()
     if report.when == 'setup':
         result.total += 1
-        result.module_outcome[report.fileName].total += 1
+        result.module_outcome[report.moduleName].total += 1
         if report.outcome != 'passed':
             result.error += 1
-            result.module_outcome[report.fileName]["error"] += 1
+            result.module_outcome[report.moduleName]["error"] += 1
     elif report.when == 'call':
         setattr(result, report.outcome, getattr(result, report.outcome)+1)
-        setattr(result.module_outcome[report.fileName], report.outcome,
-                getattr(result.module_outcome[report.fileName], report.outcome)+1)
+        setattr(result.module_outcome[report.moduleName], report.outcome,
+                getattr(result.module_outcome[report.moduleName], report.outcome)+1)
 
-    result.module_outcome[report.fileName].duration += report.duration
+    result.module_outcome[report.moduleName].duration += report.duration
     result.duration += report.duration
 
     report.duration = '{:.2f}'.format(report.duration)
@@ -173,7 +173,26 @@ def pytest_runtest_makereport(item, call):
     fixture_extras = getattr(item.config, "extras", [])
     plugin_extras = getattr(report, "extra", [])
     report.extra = fixture_extras + plugin_extras
-    report.fileName = item.location[0]
+
+    # 获取模块名
+    module_dict = defaultdict(str)
+    if hasattr(item.instance, 'pytestmark'):
+        for pm in item.instance.pytestmark:
+            if 'label_type' in pm.kwargs:
+                module_dict[pm.kwargs["label_type"]] = pm.args[0]
+    for om in item.own_markers:
+        if 'label_type' in om.kwargs:
+            module_dict[om.kwargs["label_type"]] = om.args[0]
+
+    module_name_list = ['']
+    if module_dict['epic']:
+        module_name_list.append(module_dict['epic'])
+    if module_dict['story']:
+        module_name_list.append(module_dict['story'])
+    if module_dict['feature']:
+        module_name_list.append(module_dict['feature'])
+    report.moduleName = '/'.join(module_name_list) if len(module_name_list) > 1 else item.location[0]
+
     if hasattr(item, 'callspec'):
         report.desc = item.callspec.id or item._obj.__doc__
     else:
