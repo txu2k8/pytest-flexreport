@@ -7,12 +7,18 @@
 @email:tao.xu2008@outlook.com
 @description: 
 """
+import time
+import allure
 
 
+@allure.epic("一级模块")
+@allure.story("二级模块")
+@allure.feature("Demo1")
+@allure.suite("正常")
 class TestDemo1(object):
 
-
     def test_1(self):
+        time.sleep(1)
         assert 3 + 2 == 5
 
     def test_2(self):

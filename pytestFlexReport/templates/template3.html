@@ -220,8 +220,9 @@
             <table class="table" style="color: #fff">
                 <thead class="text-light" style="background: rgba(3, 14, 70, 0.5)">
                 <tr>
-                    <th scope="col" style="width: 10%;padding: 0">ID</th>
-                    <th scope="col" style="width: 30%;padding: 0">模块</th>
+                    <th scope="col" style="width: 5%;padding: 0">ID</th>
+                    <th scope="col" style="width: 20%;padding: 0">模块</th>
+                    <th scope="col" style="width: 15%;padding: 0">耗时</th>
                     <th scope="col" style="width: 10%;padding: 0">总数</th>
                     <th scope="col" style="width: 10%;padding: 0">通过</th>
                     <th scope="col" style="width: 10%;padding: 0">失败</th>
@@ -234,6 +235,7 @@
                 <tr>
                     <td>0</td>
                     <td>合计</td>
+                    <td>{{ duration }}</td>
                     <td>{{ total }}</td>
                     <td>{{ passed }}</td>
                     <td>{{ failed }}</td>
@@ -241,10 +243,11 @@
                     <td>{{ skipped }}</td>
                     <td>{{ pass_rate }}%</td>
                 </tr>
-                {% for name, foo in module_results.items() %}
+                {% for name, foo in module_outcome.items() %}
                 <tr class="case_">
                     <td>{{ loop.index }}</td>
                     <td class="{{ name|replace('\\','')|replace('.','') }}">{{ name.split("\\")[-1] }}</td>
+                    <td>{{ foo.duration }}</td>
                     <td>{{ foo.total }}</td>
                     <td>{{ foo.passed }}</td>
                     <td>{{ foo.failed }}</td>
@@ -680,6 +683,23 @@
         $(this).parent().next().children('.tab-content div').eq($(this).index()).addClass('active show').siblings().removeClass('active show')
     });
 
+    function keepTwoContainZero(num) {
+      var result = parseFloat(num);
+      if (isNaN(result)) {
+          result = 0;
+      }
+      result = Math.round(num * 100) / 100;
+      var s_x = result.toString();
+      var pos_decimal = s_x.indexOf('.');
+      if (pos_decimal < 0) {
+          pos_decimal = s_x.length;
+          s_x += '.';
+      }
+      while (s_x.length <= pos_decimal + 2) {
+          s_x += '0';
+      }
+      return s_x;
+    }
 </script>
 
 

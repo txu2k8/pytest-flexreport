@@ -19,8 +19,19 @@ import pytest
 from jinja2 import Environment, FileSystemLoader
 
 
-# 文件信息
-class TestResult(BaseModel):
+# 结果统计
+class StatisticsOutcome(BaseModel):
+    """结果统计 - 数据模型"""
+    passed: int = 0
+    failed: int = 0
+    skipped: int = 0
+    error: int = 0
+    total: int = 0
+    pass_rate: int = 0
+    duration: int = 0  # 耗时 秒
+
+
+class TestResult(StatisticsOutcome):
     """测试结果信息 - 数据模型"""
     title: Text = ''
     tester: Text = ''
@@ -29,22 +40,13 @@ class TestResult(BaseModel):
     cases: Dict = {}
     modules: List = []
     history: List = []
-    module_results: Dict = defaultdict(dict)
-
-    rerun: int = 0
-    total: int = 0
-    passed: int = 0
-    failed: int = 0
-    skipped: int = 0
-    error: int = 0
-    pass_rate: int = 0
+    module_outcome: Dict = defaultdict(dict)  # 按模块统计测试结果
 
     start_time: int = 0
-    run_time: int = 0
     begin_time: Text = ''
 
 
-test_result = TestResult()
+result = TestResult()
 
 
 def pytest_make_parametrize_id(config, val, argname):
@@ -53,45 +55,32 @@ def pytest_make_parametrize_id(config, val, argname):
 
 
 def pytest_runtest_logreport(report):
-    report.duration = '{:.6f}'.format(report.duration)
-    if report.fileName not in test_result.modules:
-        test_result.modules.append(report.fileName)
-    if not test_result.module_results[report.fileName]:
-        test_result.module_results[report.fileName] = defaultdict(int)
-    test_result.module_results[report.fileName]["total"] += 1
+    if report.fileName not in result.modules:
+        result.modules.append(report.fileName)
+    if not result.module_outcome[report.fileName]:
+        result.module_outcome[report.fileName] = StatisticsOutcome()
+    if report.when == 'setup':
+        result.total += 1
+        result.module_outcome[report.fileName].total += 1
+        if report.outcome != 'passed':
+            result.error += 1
+            result.module_outcome[report.fileName]["error"] += 1
+    elif report.when == 'call':
+        setattr(result, report.outcome, getattr(result, report.outcome)+1)
+        setattr(result.module_outcome[report.fileName], report.outcome,
+                getattr(result.module_outcome[report.fileName], report.outcome)+1)
 
-    if report.when == 'call':
-        if report.outcome == 'passed':
-            test_result.passed += 1
-            test_result.module_results[report.fileName]["passed"] += 1
-        elif report.outcome == 'failed':
-            test_result.failed += 1
-            test_result.module_results[report.fileName]["failed"] += 1
-        elif report.outcome == 'skipped':
-            test_result.skipped += 1
-            test_result.module_results[report.fileName]["skipped"] += 1
-        elif report.outcome == 'error':
-            test_result.error += 1
-            test_result.module_results[report.fileName]["error"] += 1
-        test_result.cases[report.nodeid] = report
-    elif report.outcome == 'failed':
-        test_result.failed += 1
-        test_result.module_results[report.fileName]["failed"] += 1
-        test_result.cases[report.nodeid] = report
-    elif report.outcome == 'error':
-        test_result.error += 1
-        test_result.module_results[report.fileName]["error"] += 1
-        test_result.cases[report.nodeid] = report
-    elif report.outcome == 'skipped':
-        test_result.skipped += 1
-        test_result.module_results[report.fileName]["skipped"] += 1
-        test_result.cases[report.nodeid] = report
+    result.module_outcome[report.fileName].duration += report.duration
+    result.duration += report.duration
+
+    report.duration = '{:.2f}'.format(report.duration)
+    result.cases[report.nodeid] = report
 
 
 def pytest_sessionstart(session):
     start_ts = datetime.datetime.now()
-    test_result.start_time = start_ts.timestamp()
-    test_result.begin_time = start_ts.strftime("%Y-%m-%d %H:%M:%S")
+    result.start_time = start_ts.timestamp()
+    result.begin_time = start_ts.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def handle_history_data(report_dir, result: TestResult):
@@ -110,7 +99,7 @@ def handle_history_data(report_dir, result: TestResult):
          'fail': result.failed,
          'skip': result.skipped,
          'error': result.error,
-         'run_time': result.run_time,
+         'duration': result.duration,
          'begin_time': result.begin_time,
          'pass_rate': result.pass_rate,
          }
@@ -126,9 +115,9 @@ def pytest_sessionfinish(session):
     default_report_path = os.path.join('reports', time.strftime("%Y-%m-%d_%H_%M_%S") + '.html')
     report_path = session.config.getoption('--report') or default_report_path
     history_dir = session.config.getoption('--history_dir')
-    test_result.title = session.config.getoption('--title') or '测试报告'
-    test_result.tester = session.config.getoption('--tester') or 'NA'
-    test_result.desc = session.config.getoption('--desc') or 'NA'
+    result.title = session.config.getoption('--title') or '测试报告'
+    result.tester = session.config.getoption('--tester') or 'NA'
+    result.desc = session.config.getoption('--desc') or 'NA'
     templates_name = session.config.getoption('--template') or '1'
     if not report_path.endswith('.html'):
         report_path = report_path + '.html'
@@ -145,24 +134,24 @@ def pytest_sessionfinish(session):
     else:
         os.makedirs(report_static_dir, exist_ok=True)
 
-    test_result.run_time = '{:.1f} s'.format(time.time() - test_result.start_time)
-    test_result.total = len(test_result.cases)
-    if test_result.total != 0:
-        rate = test_result.passed / test_result.total * 100
-        test_result.pass_rate = 100 if rate >= 100 else '{:.1f}'.format(rate)
+    result.duration = '{:.1f} s'.format(time.time() - result.start_time)
+    if result.total != 0:
+        rate = result.passed / result.total * 100
+        result.pass_rate = 100 if rate >= 100 else '{:.1f}'.format(rate)
     else:
-        test_result.pass_rate = 0
+        result.pass_rate = 0
 
     # 处理模块统计数据
-    for m in test_result.module_results.keys():
-        if test_result.module_results[m]["total"] != 0:
-            rate = test_result.module_results[m]["passed"] / test_result.module_results[m]["total"] * 100
-            test_result.module_results[m]["pass_rate"] = 100 if rate >= 100 else '{:.1f}'.format(rate)
+    for m in result.module_outcome.keys():
+        result.module_outcome[m].duration = '{:.2f}'.format(result.module_outcome[m].duration)
+        if result.module_outcome[m].total != 0:
+            rate = result.module_outcome[m].passed / result.module_outcome[m].total * 100
+            result.module_outcome[m].pass_rate = 100 if rate >= 100 else '{:.1f}'.format(rate)
         else:
-            test_result.module_results[m]["pass_rate"] = 0
+            result.module_outcome[m].pass_rate = 0
 
     # 保存历史数据
-    test_result.history = handle_history_data(history_dir, test_result)
+    result.history = handle_history_data(history_dir, result)
     # 渲染报告
     template_path = os.path.join(os.path.dirname(__file__), './templates')
     template_static_path = os.path.join(template_path, 'static')
@@ -172,7 +161,7 @@ def pytest_sessionfinish(session):
     shutil.copyfile(os.path.join(template_static_path, "jquery.slim.min.js"), os.path.join(report_static_dir, "jquery.slim.min.js"))
     env = Environment(loader=FileSystemLoader(template_path))
     template = env.get_template(f'template{templates_name}.html')
-    report = template.render(dict(test_result))
+    report = template.render(dict(result))
     with open(report_path, 'wb') as f:
         f.write(report.encode('utf8'))
 

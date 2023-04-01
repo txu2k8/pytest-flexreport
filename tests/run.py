@@ -9,7 +9,6 @@
 """
 import json
 import pytest
-# from pytest_jsonreport.plugin import JSONReport
 
 
 def main(template_id=2):

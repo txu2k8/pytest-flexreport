@@ -7,6 +7,7 @@
 @email:tao.xu2008@outlook.com
 @description: 
 """
+import time
 
 
 class TestDemo2(object):
@@ -16,6 +17,7 @@ class TestDemo2(object):
         assert 3 + 2 == 5
 
     def test_2(self):
+        time.sleep(2)
         assert 3 + 2 == 6
 
     def test_3(self):
