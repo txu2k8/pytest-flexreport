@@ -19,7 +19,7 @@ def seconds_to_hms(seconds) -> str:
         return "{:.1f} s".format(seconds)
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
-    d, h = divmod(m, 24)
+    d, h = divmod(h, 24)
     if d > 0:
         return "%d天%d小时%d分%d秒" % (d, h, m, s)
     elif h > 0:
@@ -45,4 +45,5 @@ def remove_decimal0(num):
 
 
 if __name__ == '__main__':
-    print(remove_decimal0(float('{:.1f}'.format(33.01))))
+    # print(remove_decimal0(float('{:.1f}'.format(33.01))))
+    print(seconds_to_hms(69))

@@ -21,6 +21,7 @@ def main(template_id=2):
     ]
     argv = pytest_files_set + [
         # pytest-testreport
+        f'--template={template_id}',
         f'--report=./reports/template{template_id}',
         '--history_dir=./reports/',
         '--title=测试报告：demo（ID=xxx）',
@@ -28,7 +29,8 @@ def main(template_id=2):
         '--desc=demo-demo-demo-demo',
         '--log_path=./reports/',
         '--report_path=./reports/',
-        f'--template={template_id}',
+        '--testcase_basename=tests',
+
     ]
     print("pytest 命令：{}\n".format(json.dumps(argv, indent=2)))
 
