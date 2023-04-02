@@ -24,6 +24,10 @@ def main(template_id=2):
         f'--report=./reports/template{template_id}',
         '--history_dir=./reports/',
         '--title=测试报告：demo（ID=xxx）',
+        '--tester=txu',
+        '--desc=demo-demo-demo-demo',
+        '--log_path=./reports/',
+        '--report_path=./reports/',
         f'--template={template_id}',
     ]
     print("pytest 命令：{}\n".format(json.dumps(argv, indent=2)))

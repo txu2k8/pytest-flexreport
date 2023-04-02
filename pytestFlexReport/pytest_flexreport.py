@@ -18,6 +18,7 @@ from pydantic import BaseModel
 import pytest
 from jinja2 import Environment, FileSystemLoader
 from pytestFlexReport.module_define_init_ import ModuleDefineInit
+from pytestFlexReport import utils
 
 
 # 结果统计
@@ -28,7 +29,7 @@ class StatisticsOutcome(BaseModel):
     skipped: int = 0
     error: int = 0
     total: int = 0
-    pass_rate: int = 0
+    pass_rate: float = 0
     duration: int = 0  # 耗时 秒
 
 
@@ -37,14 +38,16 @@ class TestResult(StatisticsOutcome):
     title: Text = ''
     tester: Text = ''
     desc: Text = ''
+    log_path: Text = ''
+    report_path: Text = ''
+
+    start_time: int = 0
+    begin_time: Text = ''
 
     cases: Dict = {}
     modules: List = []
     history: List = []
     module_outcome: Dict = defaultdict(dict)  # 按模块统计测试结果
-
-    start_time: int = 0
-    begin_time: Text = ''
 
 
 result = TestResult()
@@ -119,6 +122,8 @@ def pytest_sessionfinish(session):
     result.title = session.config.getoption('--title') or '测试报告'
     result.tester = session.config.getoption('--tester') or 'NA'
     result.desc = session.config.getoption('--desc') or 'NA'
+    result.log_path = session.config.getoption('--log_path') or 'NA'
+    result.report_path = session.config.getoption('--report_path') or 'NA'
     templates_name = session.config.getoption('--template') or '1'
     if not report_path.endswith('.html'):
         report_path = report_path + '.html'
@@ -135,21 +140,23 @@ def pytest_sessionfinish(session):
     else:
         os.makedirs(report_static_dir, exist_ok=True)
 
-    result.duration = '{:.1f} s'.format(time.time() - result.start_time)
+    result.duration = utils.seconds_to_hms((time.time() - result.start_time))
     if result.total != 0:
         rate = result.passed / result.total * 100
-        result.pass_rate = 100 if rate >= 100 else '{:.1f}'.format(rate)
+        result.pass_rate = utils.remove_decimal0(float('{:.1f}'.format(rate)))
     else:
         result.pass_rate = 0
 
     # 处理模块统计数据
     for m in result.module_outcome.keys():
-        result.module_outcome[m].duration = '{:.2f}'.format(result.module_outcome[m].duration)
+        # result.module_outcome[m].duration = '{:.2f}'.format(result.module_outcome[m].duration)
+        result.module_outcome[m].duration = utils.seconds_to_hms(result.module_outcome[m].duration)
         if result.module_outcome[m].total != 0:
             rate = result.module_outcome[m].passed / result.module_outcome[m].total * 100
-            result.module_outcome[m].pass_rate = 100 if rate >= 100 else '{:.1f}'.format(rate)
+            result.module_outcome[m].pass_rate = utils.remove_decimal0(float('{:.1f}'.format(rate)))
         else:
             result.module_outcome[m].pass_rate = 0
+    # 排序
     result.module_outcome = dict(sorted(result.module_outcome.items(), key=lambda x: x[0]))
     # 保存历史数据
     result.history = handle_history_data(history_dir, result)
@@ -208,55 +215,69 @@ def pytest_runtest_makereport(item, call):
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup("testreport")
+    group = parser.getgroup("flex_report")
+    group.addoption(
+        "--template",
+        action="store",
+        metavar="path",
+        default=None,
+        help="测试报告模板选择（1，2，3）",
+    )
     group.addoption(
         "--report",
         action="store",
         metavar="path",
         default=None,
-        help="create html report file at given path.",
+        help="报告生成绝对路径，/*/*.html.",
     )
     group.addoption(
         "--history_dir",
         action="store",
         metavar="path",
         default=None,
-        help="create html report history dir path.",
+        help="测报告历史记录history.json的目录路径，默认使用html文件同级目录",
     )
     group.addoption(
         "--title",
         action="store",
         metavar="path",
-        default=None,
-        help="pytest-testreport Generate a title of the repor",
+        default="测试报告",
+        help="测试报告标题，回填到报告",
     )
     group.addoption(
         "--tester",
         action="store",
         metavar="path",
         default=None,
-        help="pytest-testreport Generate a tester of the report",
+        help="测试人员，回填到报告",
     )
     group.addoption(
         "--desc",
         action="store",
         metavar="path",
         default=None,
-        help="pytest-testreport Generate a description of the report",
+        help="测试构建描述，回填到报告",
     )
     group.addoption(
-        "--template",
+        "--log_path",
         action="store",
         metavar="path",
         default=None,
-        help="pytest-testreport Generate a template of the report",
+        help="测试日志路径，回填到报告（template=3）",
+    )
+    group.addoption(
+        "--report_path",
+        action="store",
+        metavar="path",
+        default=None,
+        help="测试报告路径，回填到报告（template=3）",
     )
     group.addoption(
         "--testcase_basename",
         action="store",
         metavar="path",
         default=None,
-        help="pytest-testreport testcase rootdir basename",
+        help="测试用例root-dir basename，供遍历__init__.py查找模块名",
     )
 
 
