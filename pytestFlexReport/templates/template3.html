@@ -241,7 +241,17 @@
           <div class="info">
             <div style="flex:6">
               <button type="button" class="btn btn-primary btn-sm ">测试结果</button>
-              <span>通过率 {{ pass_rate }}% （{{ passed }}/{{ total }}）</span>
+              {% if pass_rate < 70 %}
+                <span style="color: rgb(245,108,108);">通过率 {{ pass_rate }}% （{{ passed }}/{{ total }}）</span>
+              {% elif pass_rate < 90 %}
+                <span style="color: rgb(230,162,60);">通过率 {{ pass_rate }}% （{{ passed }}/{{ total }}）</span>
+              {% elif pass_rate == 100 %}
+                <span style="color: rgb(103,194,58);">通过率 {{ pass_rate }}% （{{ passed }}/{{ total }}）</span>
+              {% else %}
+                <td>{{ pass_rate }}%</td>
+                <span>通过率 {{ pass_rate }}% （{{ passed }}/{{ total }}）</span>
+              {% endif %}
+
             </div>
           </div>
         </div>
@@ -307,7 +317,15 @@
           <td>{{ failed }}</td>
           <td>{{ error }}</td>
           <td>{{ skipped }}</td>
-          <td>{{ pass_rate }}%</td>
+          {% if pass_rate < 70 %}
+            <td style="color: rgb(245,108,108);">{{ pass_rate }}%</td>
+          {% elif pass_rate < 90 %}
+            <td style="color: rgb(230,162,60);">{{ pass_rate }}%</td>
+          {% elif pass_rate == 100 %}
+            <td style="color: rgb(103,194,58);">{{ pass_rate }}%</td>
+          {% else %}
+            <td>{{ pass_rate }}%</td>
+          {% endif %}
         </tr>
         {% for name, foo in module_outcome.items() %}
           <tr class="case_">
@@ -320,7 +338,16 @@
             <td>{{ foo.failed }}</td>
             <td>{{ foo.error }}</td>
             <td>{{ foo.skipped }}</td>
-            <td>{{ foo.pass_rate }}%</td>
+            {#            <td>{{ foo.pass_rate }}%</td>#}
+            {% if foo.pass_rate < 70 %}
+              <td style="color: rgb(245,108,108);">{{ foo.pass_rate }}%</td>
+            {% elif foo.pass_rate < 90 %}
+              <td style="color: rgb(230,162,60);">{{ foo.pass_rate }}%</td>
+            {% elif foo.pass_rate == 100 %}
+              <td style="color: rgb(103,194,58);">{{ foo.pass_rate }}%</td>
+            {% else %}
+              <td>{{ foo.pass_rate }}%</td>
+            {% endif %}
           </tr>
         {% endfor %}
       </table>
