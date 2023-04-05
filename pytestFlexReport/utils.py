@@ -16,7 +16,7 @@ def seconds_to_hms(seconds) -> str:
     :return:时:分:秒，如 3:40:33
     """
     if seconds < 60:
-        return "{:.1f} s".format(seconds)
+        return "{:.1f}秒".format(seconds)
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     d, h = divmod(h, 24)
@@ -26,8 +26,8 @@ def seconds_to_hms(seconds) -> str:
         return "%d小时%d分%d秒" % (h, m, s)
     elif m > 0:
         return "%d分%d秒" % (m, s)
-
-    return "%d:%02d:%02d" % (h, m, s)
+    else:
+        return "{:.1f}秒".format(seconds)
 
 
 def remove_decimal0(num):
