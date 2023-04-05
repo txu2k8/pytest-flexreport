@@ -30,6 +30,7 @@ def main(template_id=2):
         '--log_path=./reports/',
         '--report_path=./reports/',
         '--testcase_basename=tests',
+        # '--report_sort',
 
     ]
     print("pytest 命令：{}\n".format(json.dumps(argv, indent=2)))

@@ -48,6 +48,7 @@ class TestResult(StatisticsOutcome):
     modules: List = []
     history: List = []
     module_outcome: Dict = defaultdict(dict)  # 按模块统计测试结果
+    report_sort: bool = False  # 参数报告中模块按名称排序
 
 
 result = TestResult()
@@ -117,6 +118,7 @@ def handle_history_data(report_dir, result: TestResult):
 def pytest_sessionfinish(session):
     """在整个测试运行完成之后调用的钩子函数,可以在此处生成测试报告"""
     default_report_path = os.path.join('reports', time.strftime("%Y-%m-%d_%H_%M_%S") + '.html')
+    templates_name = session.config.getoption('--template') or '1'
     report_path = session.config.getoption('--report') or default_report_path
     history_dir = session.config.getoption('--history_dir')
     result.title = session.config.getoption('--title') or '测试报告'
@@ -124,7 +126,7 @@ def pytest_sessionfinish(session):
     result.desc = session.config.getoption('--desc') or 'NA'
     result.log_path = session.config.getoption('--log_path') or 'NA'
     result.report_path = session.config.getoption('--report_path') or 'NA'
-    templates_name = session.config.getoption('--template') or '1'
+    result.report_sort = session.config.getoption('--report_sort') or False
     if not report_path.endswith('.html'):
         report_path = report_path + '.html'
 
@@ -157,7 +159,9 @@ def pytest_sessionfinish(session):
         else:
             result.module_outcome[m].pass_rate = 0
     # 排序
-    result.module_outcome = dict(sorted(result.module_outcome.items(), key=lambda x: x[0]))
+    print(result.report_sort)
+    if result.report_sort is True:
+        result.module_outcome = dict(sorted(result.module_outcome.items(), key=lambda x: x[0]))
     # 保存历史数据
     result.history = handle_history_data(history_dir, result)
     # 渲染报告
@@ -278,6 +282,13 @@ def pytest_addoption(parser):
         metavar="path",
         default=None,
         help="测试用例root-dir basename，供遍历__init__.py查找模块名",
+    )
+    group.addoption(
+        "--report_sort",
+        action="store_true",
+        default=False,
+        dest="report_sort",
+        help="测试报告中，模块列表按名称排序",
     )
 
 

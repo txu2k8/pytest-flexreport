@@ -35,7 +35,8 @@ class ModuleDefineInit(object):
                 path_parts.insert(0, dirname)
                 break
             if dirname == "":
-                raise Exception(f"未找到*/{testcase_basename}目录！")
+                # raise Exception(f"未找到*/{testcase_basename}目录！")
+                return 0, None
             tc_py = dirname
         return 1, path_parts
 
@@ -54,12 +55,14 @@ class ModuleDefineInit(object):
             str_zh = ret.group(1)
             module_zh = str(ast.literal_eval(str_zh)).strip()
             return module_zh
-        print(f"{init_py} 未定义：__module_zh__")
+        # print(f"{init_py} 未定义：__module_zh__")
         return ret
 
     def get_testcase_module_list(self, tc_py_path, testcase_basename):
         module_list = []
         testcase_idx, path_parts = self.get_testcase_path_parts(tc_py_path, testcase_basename)
+        if not path_parts:
+            return module_list
         testcase_path = os.path.join(*path_parts[:testcase_idx])
         part_path = testcase_path
         for idx, part in enumerate(path_parts[testcase_idx:]):
