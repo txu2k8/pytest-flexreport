@@ -159,7 +159,6 @@ def pytest_sessionfinish(session):
         else:
             result.module_outcome[m].pass_rate = 0
     # 排序
-    print(result.report_sort)
     if result.report_sort is True:
         result.module_outcome = dict(sorted(result.module_outcome.items(), key=lambda x: x[0]))
     # 保存历史数据
