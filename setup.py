@@ -40,7 +40,7 @@ def _find_packages():
 
 setup(
     name='pytest-flexreport',
-    version='1.2.5',
+    version='1.2.6',
     author='TXU',
     author_email='tao.xu2008@outlook.com',
     maintainer='flexreport',
