@@ -297,7 +297,9 @@
         <thead class="text-light" style="background: rgba(3, 14, 70, 0.5)">
         <tr>
           <th scope="col" style="width: 5%;padding: 0">ID</th>
-          <th scope="col" style="width: 25%;padding: 0">模块</th>
+          <th scope="col" style="width: 10%;padding: 0">一级模块</th>
+          <th scope="col" style="width: 10%;padding: 0">二级模块</th>
+          <th scope="col" style="width: 10%;padding: 0">三级模块</th>
           <th scope="col" style="width: 10%;padding: 0">耗时</th>
           <th scope="col" style="width: 10%;padding: 0">总数</th>
           <th scope="col" style="width: 10%;padding: 0">通过</th>
@@ -308,30 +310,15 @@
         </tr>
         </thead>
         <tbody>
-        <tr>
-          <td>0</td>
-          <td>合计</td>
-          <td>{{ duration }}</td>
-          <td>{{ total }}</td>
-          <td>{{ passed }}</td>
-          <td>{{ failed }}</td>
-          <td>{{ error }}</td>
-          <td>{{ skipped }}</td>
-          {% if pass_rate < 70 %}
-            <td style="color: rgb(245,108,108);">{{ pass_rate }}%</td>
-          {% elif pass_rate < 90 %}
-            <td style="color: rgb(230,162,60);">{{ pass_rate }}%</td>
-          {% elif pass_rate == 100 %}
-            <td style="color: rgb(103,194,58);">{{ pass_rate }}%</td>
-          {% else %}
-            <td>{{ pass_rate }}%</td>
-          {% endif %}
-        </tr>
+
         {% for name, foo in module_outcome.items() %}
           <tr class="case_">
             <td>{{ loop.index }}</td>
-            <td class="{{ name|replace('\\','')|replace('.','') }}"
-                style="text-align: left">{{ name.split("\\")[-1] }}</td>
+{#            <td class="{{ name|replace('\\','')|replace('.','') }}"#}
+{#                style="text-align: left">{{ name.split("\\")[-1] }}</td>#}
+            {% for module_name in foo.modules_v3 %}
+              <td>{{ module_name }}</td>
+            {% endfor %}
             <td>{{ foo.duration }}</td>
             <td>{{ foo.total }}</td>
             <td>{{ foo.passed }}</td>
@@ -350,6 +337,26 @@
             {% endif %}
           </tr>
         {% endfor %}
+        {#  合计 #}
+        <tr>
+          <td>0</td>
+          <td colspan="3">合计</td>
+          <td>{{ duration }}</td>
+          <td>{{ total }}</td>
+          <td>{{ passed }}</td>
+          <td>{{ failed }}</td>
+          <td>{{ error }}</td>
+          <td>{{ skipped }}</td>
+          {% if pass_rate < 70 %}
+            <td style="color: rgb(245,108,108);">{{ pass_rate }}%</td>
+          {% elif pass_rate < 90 %}
+            <td style="color: rgb(230,162,60);">{{ pass_rate }}%</td>
+          {% elif pass_rate == 100 %}
+            <td style="color: rgb(103,194,58);">{{ pass_rate }}%</td>
+          {% else %}
+            <td>{{ pass_rate }}%</td>
+          {% endif %}
+        </tr>
       </table>
     </div>
 

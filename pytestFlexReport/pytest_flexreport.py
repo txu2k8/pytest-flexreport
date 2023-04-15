@@ -24,6 +24,7 @@ from pytestFlexReport import utils
 # 结果统计
 class StatisticsOutcome(BaseModel):
     """结果统计 - 数据模型"""
+    modules_v3: List = ['', '', '']  # 三级模块
     passed: int = 0
     failed: int = 0
     skipped: int = 0
@@ -33,6 +34,17 @@ class StatisticsOutcome(BaseModel):
     duration: int = 0  # 耗时 秒
 
 
+# 模块树统计
+class StatisticsModule(BaseModel):
+    has_leaf: bool = False  # 默认无子模块
+    name: Text = ''
+    subs: List = []  # 子模块
+
+    modules_v3: List = ['', '', '']  # 三级模块
+    outcome: StatisticsOutcome = StatisticsOutcome()  # 结果统计
+
+
+# 测试结果
 class TestResult(StatisticsOutcome):
     """测试结果信息 - 数据模型"""
     title: Text = ''
@@ -64,6 +76,7 @@ def pytest_runtest_logreport(report):
         result.modules.append(report.moduleName)
     if not result.module_outcome[report.moduleName]:
         result.module_outcome[report.moduleName] = StatisticsOutcome()
+        result.module_outcome[report.moduleName].modules_v3 = report.module_name_v3
     if report.when == 'setup':
         result.total += 1
         result.module_outcome[report.moduleName].total += 1
@@ -78,7 +91,7 @@ def pytest_runtest_logreport(report):
     result.module_outcome[report.moduleName].duration += report.duration
     result.duration += report.duration
 
-    report.duration = '{:.2f}'.format(report.duration)
+    report.duration = '{:.2f}'.format(float(report.duration))
     result.cases[report.nodeid] = report
 
 
@@ -185,7 +198,10 @@ def pytest_runtest_makereport(item, call):
     plugin_extras = getattr(report, "extra", [])
     report.extra = fixture_extras + plugin_extras
 
-    # 获取模块名
+    # 获取用例模块名，例如：
+    # @allure.epic("对象存储")
+    # @allure.story("桶")
+    # @allure.feature("对象")
     module_dict = defaultdict(str)
     if hasattr(item.instance, 'pytestmark'):
         for pm in item.instance.pytestmark:
@@ -195,20 +211,30 @@ def pytest_runtest_makereport(item, call):
         if 'label_type' in om.kwargs:
             module_dict[om.kwargs["label_type"]] = om.args[0]
 
-    module_name_list = ['']
-    if module_dict['epic']:
-        module_name_list.append(module_dict['epic'])
-    if module_dict['story']:
-        module_name_list.append(module_dict['story'])
-    if module_dict['feature']:
-        module_name_list.append(module_dict['feature'])
-    if len(module_name_list) <= 1:
+    # 三级模块
+    module_name_v3 = [
+        module_dict['epic'],
+        module_dict['story'],
+        module_dict['feature'],
+    ]
+
+    # 未设置allure模块名，则获取__init__.py中定义的模块名称，例如：
+    # __module_zh__ = 'tests'
+    if not (module_dict['epic'] or module_dict['story'] or module_dict['feature']):
         testcase_basename = item.config.getoption('--testcase_basename')
-        module_name_list.extend(ModuleDefineInit().get_testcase_module_list(
+        test_case_modules = ModuleDefineInit().get_testcase_module_list(
             item.fspath.dirname, testcase_basename or item.config.rootdir.basename
-        ))
+        )
+        # 如果__init__.py中也未定义的模块名称，取py模块名称
+        if len(test_case_modules) == 0:
+            test_case_modules = [item.location[0]]
+        # 赋值到三级模块列表
+        for idx, m in enumerate(test_case_modules):
+            module_name_v3[idx] = m
+
     # print(module_name_list)
-    report.moduleName = '/'.join(module_name_list) if len(module_name_list) > 1 else item.location[0]
+    report.moduleName = '/'.join(module_name_v3)
+    report.module_name_v3 = module_name_v3
 
     if hasattr(item, 'callspec'):
         report.desc = item.callspec.id or item._obj.__doc__
