@@ -24,7 +24,6 @@ from pytestFlexReport import utils
 # 结果统计
 class StatisticsOutcome(BaseModel):
     """结果统计 - 数据模型"""
-    modules_v3: List = ['', '', '']  # 三级模块
     passed: int = 0
     failed: int = 0
     skipped: int = 0
@@ -34,13 +33,14 @@ class StatisticsOutcome(BaseModel):
     duration: int = 0  # 耗时 秒
 
 
-# 模块树统计
-class StatisticsModule(BaseModel):
-    has_leaf: bool = False  # 默认无子模块
-    name: Text = ''
-    subs: List = []  # 子模块
-
-    modules_v3: List = ['', '', '']  # 三级模块
+# 模块树统计测试结果
+class ModuleResult(BaseModel):
+    idx: int = 0  # 序号
+    name: Text = ''  # 模块名称
+    first: bool = False  # 标记是否第一个模块/子模块
+    subs_len: int = 0  # 子模块数量
+    subs_len_v3: int = 0  # 包含三级模块数量
+    subs: Dict = {}  # 子模块：name=StatisticsModule()
     outcome: StatisticsOutcome = StatisticsOutcome()  # 结果统计
 
 
@@ -59,11 +59,22 @@ class TestResult(StatisticsOutcome):
     cases: Dict = {}
     modules: List = []
     history: List = []
+    module_result: Dict = defaultdict(dict)  # 按模块统计测试结果
     module_outcome: Dict = defaultdict(dict)  # 按模块统计测试结果
     report_sort: bool = False  # 参数报告中模块按名称排序
 
 
 result = TestResult()
+
+
+def format_module_result(module_result: ModuleResult) -> ModuleResult:
+    module_result.outcome.duration = utils.seconds_to_hms(module_result.outcome.duration)
+    if module_result.outcome.total != 0:
+        rate = module_result.outcome.passed / module_result.outcome.total * 100
+        module_result.outcome.pass_rate = utils.remove_decimal0(float('{:.1f}'.format(rate)))
+    else:
+        module_result.outcome.pass_rate = 0
+    return module_result
 
 
 def pytest_make_parametrize_id(config, val, argname):
@@ -73,22 +84,42 @@ def pytest_make_parametrize_id(config, val, argname):
 
 def pytest_runtest_logreport(report):
     if report.moduleName not in result.modules:
-        result.modules.append(report.moduleName)
-    if not result.module_outcome[report.moduleName]:
-        result.module_outcome[report.moduleName] = StatisticsOutcome()
-        result.module_outcome[report.moduleName].modules_v3 = report.module_name_v3
+        result.modules.append(report.moduleName)  # template1/template2
+    m1, m2, m3 = report.module_name_v3
+    if m1 not in result.module_result:
+        result.module_result[m1] = ModuleResult(name=m1)
+        result.module_result[m1].idx = len(result.module_result)
+    if m2 not in result.module_result[m1].subs:
+        result.module_result[m1].subs_len += 1
+        result.module_result[m1].subs[m2] = ModuleResult(name=m2)
+        result.module_result[m1].subs[m2].idx = len(result.module_result[m1].subs)
+    if m3 not in result.module_result[m1].subs[m2].subs:
+        result.module_result[m1].subs[m2].subs_len += 1
+        result.module_result[m1].subs[m2].subs[m3] = ModuleResult(name=m3)
+        result.module_result[m1].subs[m2].subs[m3].idx = len(result.module_result[m1].subs[m2].subs)
+        # subs_len_v3
+        result.module_result[m1].subs_len_v3 += 1
+        result.module_result[m1].subs[m2].subs_len_v3 += 1
+
     if report.when == 'setup':
         result.total += 1
-        result.module_outcome[report.moduleName].total += 1
+        result.module_result[m1].outcome.total += 1
+        result.module_result[m1].subs[m2].outcome.total += 1
+        result.module_result[m1].subs[m2].subs[m3].outcome.total += 1
         if report.outcome != 'passed':
             result.error += 1
-            result.module_outcome[report.moduleName]["error"] += 1
+            result.module_result[m1].outcome.error += 1
+            result.module_result[m1].subs[m2].outcome.error += 1
+            result.module_result[m1].subs[m2].subs[m3].outcome.error += 1
     elif report.when == 'call':
         setattr(result, report.outcome, getattr(result, report.outcome)+1)
-        setattr(result.module_outcome[report.moduleName], report.outcome,
-                getattr(result.module_outcome[report.moduleName], report.outcome)+1)
+        setattr(result.module_result[m1].outcome, report.outcome, getattr(result.module_result[m1].outcome, report.outcome)+1)
+        setattr(result.module_result[m1].subs[m2].outcome, report.outcome, getattr(result.module_result[m1].subs[m2].outcome, report.outcome)+1)
+        setattr(result.module_result[m1].subs[m2].subs[m3].outcome, report.outcome, getattr(result.module_result[m1].subs[m2].subs[m3].outcome, report.outcome)+1)
 
-    result.module_outcome[report.moduleName].duration += report.duration
+    result.module_result[m1].outcome.duration += report.duration
+    result.module_result[m1].subs[m2].outcome.duration += report.duration
+    result.module_result[m1].subs[m2].subs[m3].outcome.duration += report.duration
     result.duration += report.duration
 
     report.duration = '{:.2f}'.format(float(report.duration))
@@ -163,17 +194,12 @@ def pytest_sessionfinish(session):
         result.pass_rate = 0
 
     # 处理模块统计数据
-    for m in result.module_outcome.keys():
-        # result.module_outcome[m].duration = '{:.2f}'.format(result.module_outcome[m].duration)
-        result.module_outcome[m].duration = utils.seconds_to_hms(result.module_outcome[m].duration)
-        if result.module_outcome[m].total != 0:
-            rate = result.module_outcome[m].passed / result.module_outcome[m].total * 100
-            result.module_outcome[m].pass_rate = utils.remove_decimal0(float('{:.1f}'.format(rate)))
-        else:
-            result.module_outcome[m].pass_rate = 0
-    # 排序
-    if result.report_sort is True:
-        result.module_outcome = dict(sorted(result.module_outcome.items(), key=lambda x: x[0]))
+    for m1 in result.module_result.keys():
+        result.module_result[m1] = format_module_result(result.module_result[m1])
+        for m2 in result.module_result[m1].subs.keys():
+            result.module_result[m1].subs[m2] = format_module_result(result.module_result[m1].subs[m2])
+            for m3 in result.module_result[m1].subs[m2].subs.keys():
+                result.module_result[m1].subs[m2].subs[m3] = format_module_result(result.module_result[m1].subs[m2].subs[m3])
     # 保存历史数据
     result.history = handle_history_data(history_dir, result)
     # 渲染报告

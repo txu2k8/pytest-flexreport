@@ -13,7 +13,7 @@ import allure
 
 @allure.epic("对象存储")
 @allure.story("桶")
-@allure.feature("对象")
+@allure.feature("创建")
 @allure.suite("正常")
 class TestDemo2(object):
 
@@ -25,7 +25,7 @@ class TestDemo2(object):
         assert 3 + 2 == 6
 
     def test_3(self):
-        assert 3 + 2 == 7
+        assert 3 + 2 == 5
 
     def test_4(self):
         assert 3 + 2 == 5
@@ -52,6 +52,82 @@ class TestDemo2(object):
         assert 3 + 2 == 5
 
     def test_12(self):
+        assert 3 + 2 == 5
+
+
+@allure.epic("对象存储")
+@allure.story("桶")
+@allure.feature("修改")
+@allure.suite("正常")
+class TestDemo32(object):
+
+    def test_321(self):
+        assert 3 + 2 == 5
+
+    def test_322(self):
+        assert 3 + 2 == 5
+
+    def test_323(self):
+        assert 3 + 2 == 7
+
+
+@allure.epic("对象存储")
+@allure.story("对象")
+@allure.feature("上传")
+@allure.suite("正常")
+class TestDemo42(object):
+
+    def test_1(self):
+        assert 3 + 2 == 5
+
+    def test_2(self):
+        assert 3 + 2 == 5
+
+    def test_3(self):
+        assert 3 + 2 == 5
+
+
+@allure.epic("对象存储")
+@allure.story("对象")
+@allure.feature("下载")
+@allure.suite("正常")
+class TestDemo43(object):
+
+    def test_1(self):
+        assert 3 + 2 == 5
+
+    def test_2(self):
+        assert 3 + 2 == 5
+
+    def test_3(self):
+        assert 3 + 2 == 5
+
+
+@allure.epic("对象存储")
+@allure.story("增值功能")
+class TestDemo44(object):
+
+    def test_1(self):
+        assert 3 + 2 == 5
+
+    def test_2(self):
+        assert 3 + 2 == 5
+
+    def test_3(self):
+        assert 3 + 2 == 5
+
+
+@allure.epic("对象存储")
+@allure.feature("多副本")
+class TestDemo46(object):
+
+    def test_1(self):
+        assert 3 + 2 == 5
+
+    def test_2(self):
+        assert 3 + 2 == 5
+
+    def test_3(self):
         assert 3 + 2 == 5
 
 

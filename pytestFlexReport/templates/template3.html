@@ -296,51 +296,53 @@
       <table class="table" style="color: #fff">
         <thead class="text-light" style="background: rgba(3, 14, 70, 0.5)">
         <tr>
-          <th scope="col" style="width: 5%;padding: 0">ID</th>
-          <th scope="col" style="width: 10%;padding: 0">一级模块</th>
-          <th scope="col" style="width: 10%;padding: 0">二级模块</th>
-          <th scope="col" style="width: 10%;padding: 0">三级模块</th>
+          <th scope="col" style="width: 4%;padding: 0">ID</th>
+          <th scope="col" style="width: 12%;padding: 0">一级模块</th>
+          <th scope="col" style="width: 12%;padding: 0">二级模块</th>
+          <th scope="col" style="width: 12%;padding: 0">三级模块</th>
           <th scope="col" style="width: 10%;padding: 0">耗时</th>
-          <th scope="col" style="width: 10%;padding: 0">总数</th>
-          <th scope="col" style="width: 10%;padding: 0">通过</th>
-          <th scope="col" style="width: 10%;padding: 0">失败</th>
-          <th scope="col" style="width: 10%;padding: 0">阻塞</th>
-          <th scope="col" style="width: 10%;padding: 0">跳过</th>
-          <th scope="col" style="width: 10%;padding: 0">通过率</th>
+          <th scope="col" style="width: 8%;padding: 0">总数</th>
+          <th scope="col" style="width: 8%;padding: 0">通过</th>
+          <th scope="col" style="width: 8%;padding: 0">失败</th>
+          <th scope="col" style="width: 8%;padding: 0">阻塞</th>
+          <th scope="col" style="width: 8%;padding: 0">跳过</th>
+          <th scope="col" style="width: 8%;padding: 0">通过率</th>
         </tr>
         </thead>
         <tbody>
 
-        {% for name, foo in module_outcome.items() %}
-          <tr class="case_">
-            <td>{{ loop.index }}</td>
-{#            <td class="{{ name|replace('\\','')|replace('.','') }}"#}
-{#                style="text-align: left">{{ name.split("\\")[-1] }}</td>#}
-            {% for module_name in foo.modules_v3 %}
-              <td>{{ module_name }}</td>
+        {% for m1, foo1 in module_result.items() %}
+          {% for m2, foo2 in foo1.subs.items() %}
+            {% for m3, foo3 in foo2.subs.items() %}
+              <tr class="case_">
+                <td>{{ loop.index }}</td>
+                {% if foo2.idx == 1 and foo3.idx == 1 %}<td rowspan="{{ foo1.subs_len_v3 }}">{{ foo1.name }}</td>
+                {% endif %}
+                {% if foo3.idx == 1 %}<td rowspan="{{ foo2.subs_len_v3 }}">{{ foo2.name }}</td>
+                {% endif %}
+                <td>{{ foo3.name }}</td>
+                <td>{{ foo3.outcome.duration }}</td>
+                <td>{{ foo3.outcome.total }}</td>
+                <td>{{ foo3.outcome.passed }}</td>
+                <td>{{ foo3.outcome.failed }}</td>
+                <td>{{ foo3.outcome.error }}</td>
+                <td>{{ foo3.outcome.skipped }}</td>
+                {% if foo3.outcome.pass_rate < 70 %}
+                  <td style="color: rgb(245,108,108);">{{ foo3.outcome.pass_rate }}%</td>
+                {% elif foo3.outcome.pass_rate < 90 %}
+                  <td style="color: rgb(230,162,60);">{{ foo3.outcome.pass_rate }}%</td>
+                {% elif foo3.outcome.pass_rate == 100 %}
+                  <td style="color: rgb(103,194,58);">{{ foo3.outcome.pass_rate }}%</td>
+                {% else %}
+                  <td>{{ foo3.outcome.pass_rate }}%</td>
+                {% endif %}
+              </tr>
             {% endfor %}
-            <td>{{ foo.duration }}</td>
-            <td>{{ foo.total }}</td>
-            <td>{{ foo.passed }}</td>
-            <td>{{ foo.failed }}</td>
-            <td>{{ foo.error }}</td>
-            <td>{{ foo.skipped }}</td>
-            {#            <td>{{ foo.pass_rate }}%</td>#}
-            {% if foo.pass_rate < 70 %}
-              <td style="color: rgb(245,108,108);">{{ foo.pass_rate }}%</td>
-            {% elif foo.pass_rate < 90 %}
-              <td style="color: rgb(230,162,60);">{{ foo.pass_rate }}%</td>
-            {% elif foo.pass_rate == 100 %}
-              <td style="color: rgb(103,194,58);">{{ foo.pass_rate }}%</td>
-            {% else %}
-              <td>{{ foo.pass_rate }}%</td>
-            {% endif %}
-          </tr>
+          {% endfor %}
         {% endfor %}
         {#  合计 #}
         <tr>
-          <td>0</td>
-          <td colspan="3">合计</td>
+          <td colspan="4">合计</td>
           <td>{{ duration }}</td>
           <td>{{ total }}</td>
           <td>{{ passed }}</td>

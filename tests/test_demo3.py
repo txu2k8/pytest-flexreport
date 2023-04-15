@@ -16,7 +16,7 @@ class TestDemo3(object):
         assert 3 + 2 == 5
 
     def test_2(self):
-        assert 3 + 2 == 6
+        assert 3 + 2 == 5
 
     def test_3(self):
         assert 3 + 2 == 7
