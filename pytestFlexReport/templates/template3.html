@@ -296,7 +296,6 @@
       <table class="table" style="color: #fff">
         <thead class="text-light" style="background: rgba(3, 14, 70, 0.5)">
         <tr>
-          <th scope="col" style="width: 4%;padding: 0">ID</th>
           <th scope="col" style="width: 12%;padding: 0">一级模块</th>
           <th scope="col" style="width: 12%;padding: 0">二级模块</th>
           <th scope="col" style="width: 12%;padding: 0">三级模块</th>
@@ -315,7 +314,6 @@
           {% for m2, foo2 in foo1.subs.items() %}
             {% for m3, foo3 in foo2.subs.items() %}
               <tr class="case_">
-                <td>{{ loop.index }}</td>
                 {% if foo2.idx == 1 and foo3.idx == 1 %}<td rowspan="{{ foo1.subs_len_v3 }}">{{ foo1.name }}</td>
                 {% endif %}
                 {% if foo3.idx == 1 %}<td rowspan="{{ foo2.subs_len_v3 }}">{{ foo2.name }}</td>
@@ -342,7 +340,7 @@
         {% endfor %}
         {#  合计 #}
         <tr>
-          <td colspan="4">合计</td>
+          <td colspan="3">合计</td>
           <td>{{ duration }}</td>
           <td>{{ total }}</td>
           <td>{{ passed }}</td>
